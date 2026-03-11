@@ -1,0 +1,242 @@
+openapi: 3.0.3
+info:
+  title: Logistics Shipment Booking & Tracking API
+  version: 1.0.0
+servers:
+  - url: http://localhost:4000
+security:
+  - ApiKeyAuth: []
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: x-api-key
+  schemas:
+    CarrierService:
+      type: object
+      properties:
+        id: { type: string }
+        carrier_group_id: { type: string }
+        carrier_name: { type: string }
+        mode: { type: string, enum: [air, sea, road] }
+        origin: { type: string }
+        destination: { type: string }
+        max_weight: { type: number }
+        max_volume: { type: number }
+        base_price: { type: number }
+        transit_days: { type: integer }
+        currency: { type: string }
+    Shipment:
+      type: object
+      properties:
+        id: { type: string }
+        shipment_number: { type: string, nullable: true }
+        carrier_group_id: { type: string }
+        status: { type: string }
+        shipper_name: { type: string }
+        shipper_email: { type: string }
+        pickup_address: { type: string }
+        delivery_address: { type: string }
+        cargo_type: { type: string }
+        weight: { type: number }
+        volume: { type: number }
+        required_delivery_date: { type: string }
+        total_price_snapshot: { type: number, nullable: true }
+        total_transit_days_snapshot: { type: integer, nullable: true }
+        eta_snapshot: { type: string, nullable: true }
+        version: { type: integer }
+    ShipmentLeg:
+      type: object
+      properties:
+        id: { type: string }
+        shipment_id: { type: string }
+        carrier_service_id: { type: string }
+        sequence: { type: integer }
+        origin: { type: string }
+        destination: { type: string }
+        mode: { type: string }
+        planned_price: { type: number }
+        planned_transit_days: { type: integer }
+        price_snapshot: { type: number, nullable: true }
+        transit_days_snapshot: { type: integer, nullable: true }
+        eta_snapshot: { type: string, nullable: true }
+        status: { type: string }
+    StatusHistory:
+      type: object
+      properties:
+        id: { type: string }
+        shipment_id: { type: string }
+        status: { type: string }
+        reason_code: { type: string, nullable: true }
+        note: { type: string, nullable: true }
+        created_at: { type: string }
+paths:
+  /api/health:
+    get:
+      responses:
+        "200":
+          description: Health check
+  /api/carrier-services:
+    get:
+      parameters:
+        - in: query
+          name: origin
+          schema: { type: string }
+        - in: query
+          name: destination
+          schema: { type: string }
+        - in: query
+          name: carrier
+          schema: { type: string }
+        - in: query
+          name: mode
+          schema: { type: string }
+        - in: query
+          name: sort
+          schema: { type: string, enum: [price, transit, carrier] }
+        - in: query
+          name: order
+          schema: { type: string, enum: [asc, desc] }
+        - in: query
+          name: page
+          schema: { type: integer }
+        - in: query
+          name: pageSize
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Carrier services list
+  /api/shipments/drafts:
+    post:
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - carrierGroupId
+                - shipperName
+                - shipperEmail
+                - pickupAddress
+                - deliveryAddress
+                - cargoType
+                - weight
+                - volume
+                - requiredDeliveryDate
+              properties:
+                carrierGroupId: { type: string }
+                shipperName: { type: string }
+                shipperEmail: { type: string }
+                pickupAddress: { type: string }
+                deliveryAddress: { type: string }
+                cargoType: { type: string }
+                weight: { type: number }
+                volume: { type: number }
+                requiredDeliveryDate: { type: string }
+      responses:
+        "201":
+          description: Draft shipment created
+  /api/shipments/{id}:
+    get:
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Shipment details
+    patch:
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [version]
+      responses:
+        "200":
+          description: Draft updated
+  /api/shipments/{id}/legs:
+    post:
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [carrierServiceId, sequence]
+              properties:
+                carrierServiceId: { type: string }
+                sequence: { type: integer }
+      responses:
+        "201":
+          description: Leg added
+  /api/shipments/{id}/legs/{legId}/status:
+    patch:
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+        - in: path
+          name: legId
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status: { type: string }
+                reasonCode: { type: string }
+                note: { type: string }
+      responses:
+        "200":
+          description: Leg status updated
+  /api/shipments/{id}/submit:
+    post:
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Shipment submitted
+  /api/shipments:
+    get:
+      parameters:
+        - in: query
+          name: status
+          schema: { type: string }
+        - in: query
+          name: shipmentNumber
+          schema: { type: string }
+      responses:
+        "200":
+          description: Shipment list
+  /api/shipments/{id}/pricing:
+    get:
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Current draft pricing

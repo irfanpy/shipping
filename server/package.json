@@ -1,0 +1,16 @@
+{
+  "name": "logistics-shipment-server",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "node --watch src/index.js",
+    "start": "node src/index.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.19.2",
+    "nanoid": "^5.0.7",
+    "sql.js": "^1.10.3",
+    "zod": "^3.23.8"
+  }
+}
