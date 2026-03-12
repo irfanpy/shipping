@@ -1,19 +1,9 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
 import Layout from "./Layout.jsx";
-import { getShipment } from "../api.js";
+import useShipmentDetail from "../hooks/useShipmentDetail.js";
 
 export default function ShipmentDetail({ id }) {
-  const [detail, setDetail] = useState(null);
-  const [status, setStatus] = useState("loading");
-
-  useEffect(() => {
-    getShipment(id)
-      .then((data) => {
-        setDetail(data);
-        setStatus("done");
-      })
-      .catch(() => setStatus("error"));
-  }, [id]);
+  const { detail, status } = useShipmentDetail(id);
 
   if (status === "loading") {
     return (
@@ -52,10 +42,10 @@ export default function ShipmentDetail({ id }) {
           <article key={leg.id} className="card">
             <div>
               <h3>
-                Leg {leg.sequence}  {leg.mode}
+                Leg {leg.sequence} · {leg.mode}
               </h3>
               <p>
-                {leg.origin}  {leg.destination}
+                {leg.origin} → {leg.destination}
               </p>
             </div>
             <div>

@@ -1,22 +1,11 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
 import { Link } from "react-router-dom";
 import Layout from "./Layout.jsx";
-import { getShipments } from "../api.js";
+import useShipments from "../hooks/useShipments.js";
+import { shipmentStatusOptions } from "../constants/trackingDefaults.js";
 
 export default function TrackingPage() {
-  const [filter, setFilter] = useState({ status: "", shipmentNumber: "" });
-  const [shipments, setShipments] = useState([]);
-  const [status, setStatus] = useState("idle");
-
-  useEffect(() => {
-    setStatus("loading");
-    getShipments(filter)
-      .then((data) => {
-        setShipments(data.data || []);
-        setStatus("done");
-      })
-      .catch(() => setStatus("error"));
-  }, [filter]);
+  const { filter, setFilter, shipments, status } = useShipments();
 
   return (
     <Layout>
@@ -32,12 +21,11 @@ export default function TrackingPage() {
             value={filter.status}
             onChange={(event) => setFilter({ ...filter, status: event.target.value })}
           >
-            <option value="">All statuses</option>
-            <option value="Draft">Draft</option>
-            <option value="Booked">Booked</option>
-            <option value="In Transit">In Transit</option>
-            <option value="Exception">Exception</option>
-            <option value="Delivered">Delivered</option>
+            {shipmentStatusOptions.map((option) => (
+              <option key={option.value || "all"} value={option.value}>
+                {option.label}
+              </option>
+            ))}
           </select>
         </div>
         <div className="results">
@@ -48,7 +36,7 @@ export default function TrackingPage() {
               <div>
                 <h3>{shipment.shipment_number || shipment.id}</h3>
                 <p>
-                  {shipment.pickup_address}  {shipment.delivery_address}
+                  {shipment.pickup_address} · {shipment.delivery_address}
                 </p>
               </div>
               <div>

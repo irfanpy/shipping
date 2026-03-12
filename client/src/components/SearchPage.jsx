@@ -1,33 +1,10 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
 import Layout from "./Layout.jsx";
-import { searchCarrierServices } from "../api.js";
-import useDebouncedValue from "../hooks/useDebouncedValue.js";
+import useCarrierSearch from "../hooks/useCarrierSearch.js";
+import { modeOptions, orderOptions, sortOptions } from "../constants/searchDefaults.js";
 
 export default function SearchPage() {
-  const [filters, setFilters] = useState({
-    origin: "",
-    destination: "",
-    carrier: "",
-    mode: "",
-    sort: "price",
-    order: "asc"
-  });
-  const [results, setResults] = useState([]);
-  const [status, setStatus] = useState("idle");
-
-  const debounced = useDebouncedValue(filters, 400);
-
-  useEffect(() => {
-    const searchParams = new URLSearchParams(debounced);
-    window.history.replaceState(null, "", `/?${searchParams.toString()}`);
-    setStatus("loading");
-    searchCarrierServices(debounced)
-      .then((data) => {
-        setResults(data.data || []);
-        setStatus("done");
-      })
-      .catch(() => setStatus("error"));
-  }, [debounced]);
+  const { filters, setFilters, results, status } = useCarrierSearch();
 
   return (
     <Layout>
@@ -53,25 +30,31 @@ export default function SearchPage() {
             value={filters.mode}
             onChange={(event) => setFilters({ ...filters, mode: event.target.value })}
           >
-            <option value="">All modes</option>
-            <option value="sea">Sea</option>
-            <option value="air">Air</option>
-            <option value="road">Road</option>
+            {modeOptions.map((option) => (
+              <option key={option.value || "all"} value={option.value}>
+                {option.label}
+              </option>
+            ))}
           </select>
           <select
             value={filters.sort}
             onChange={(event) => setFilters({ ...filters, sort: event.target.value })}
           >
-            <option value="price">Sort by price</option>
-            <option value="transit">Sort by transit</option>
-            <option value="carrier">Sort by carrier</option>
+            {sortOptions.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
           </select>
           <select
             value={filters.order}
             onChange={(event) => setFilters({ ...filters, order: event.target.value })}
           >
-            <option value="asc">Ascending</option>
-            <option value="desc">Descending</option>
+            {orderOptions.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
           </select>
         </div>
         <div className="results">
